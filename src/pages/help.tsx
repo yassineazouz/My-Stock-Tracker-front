@@ -4,11 +4,10 @@ import {
   Bell,
   PlusCircle,
   Settings,
-  DollarSign,
   TrendingUp,
   RefreshCw,
   HelpCircle,
-  BookOpen,
+  BookOpen
 } from 'lucide-react';
 
 interface HelpSectionProps {

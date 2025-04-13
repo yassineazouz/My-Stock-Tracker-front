@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
 
 export interface Stock {
@@ -50,7 +49,7 @@ export function PortfolioTable({ stocks }: PortfolioTableProps) {
                 ${stock.currentPrice.toFixed(2)}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                ${stock.totalValue.toFixed(2)}
+                ${stock.totalValue}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right">
                 <div className={`flex items-center justify-end text-sm ${stock.gainLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -59,9 +58,9 @@ export function PortfolioTable({ stocks }: PortfolioTableProps) {
                   ) : (
                     <ArrowDownIcon className="w-4 h-4 mr-1" />
                   )}
-                  ${Math.abs(stock.gainLoss).toFixed(2)}
+                  ${Math.abs(stock.gainLoss)}
                   <span className="ml-1">
-                    ({stock.gainLossPercentage.toFixed(2)}%)
+                    ({stock.gainLossPercentage}%)
                   </span>
                 </div>
               </td>
