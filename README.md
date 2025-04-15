@@ -1,6 +1,8 @@
 
 # ✅ Stock Portfolio Tracker
 
+![image](https://github.com/user-attachments/assets/204b91c9-7eeb-4e5a-8642-d92f55f3e623)
+
 ## 📝 Project Description
 This is a web-based stock portfolio tracker that allows users to track the performance of their stock market investments in real-time. Users can add stocks to their portfolio, view price trends, visualize interactive charts, calculate their gains and losses, and receive personalized alerts based on defined thresholds.
 
