@@ -29,7 +29,13 @@ function PriceChange({ change, percentChange }: { change: string; percentChange:
 export function MarketOverview() {
     const { data: stocks, isLoading, mutate } = useSWR<StockData[]>(
         'stocks',
-        fetchAllStocks
+        fetchAllStocks,
+        {
+            revalidateOnFocus: false,
+            revalidateOnReconnect: false,
+            refreshInterval: 0,
+            dedupingInterval: Infinity,
+        }
     );
 
 
