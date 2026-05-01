@@ -1,15 +1,5 @@
 import { ArrowUpIcon, ArrowDownIcon } from 'lucide-react';
-
-export interface Stock {
-  symbol: string;
-  companyName: string;
-  quantity: number;
-  purchasePrice: number;
-  currentPrice: number;
-  totalValue: number;
-  gainLoss: number;
-  gainLossPercentage: number;
-}
+import { Stock } from '@/types/Stock';
 
 interface PortfolioTableProps {
   stocks: Stock[];
@@ -32,7 +22,7 @@ export function PortfolioTable({ stocks }: PortfolioTableProps) {
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {stocks.map((stock) => (
-            <tr key={stock.symbol} className="hover:bg-gray-50">
+            <tr key={stock.id ?? stock.symbol} className="hover:bg-gray-50">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="font-medium text-gray-900">{stock.symbol}</div>
               </td>

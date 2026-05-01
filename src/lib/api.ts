@@ -1,6 +1,6 @@
-import {StockData} from '@/types/stock';
-import {Portfolio} from "@/types/Portfolio.ts";
-import {Stock} from "@/components/portfolio/portfolio-table.tsx";
+import { StockData } from '@/types/stock-data';
+import { Stock } from '@/types/Stock';
+import { Portfolio } from '@/types/Portfolio';
 
 const API_URL = 'http://localhost:8080/api';
 
@@ -12,8 +12,6 @@ export async function getTopStock(): Promise<StockData> {
     }
 
     const data = await response.json();
-    console.log('Top stock data:', data); // 👈 Now you’ll see the real data
-    data.changePercent = parseFloat(data.changePercent);
 
     return data;
 }

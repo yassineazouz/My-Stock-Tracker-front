@@ -1,7 +1,7 @@
 import {TrendingUp, DollarSign, Bell, Award} from 'lucide-react';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
 import useSWR from "swr";
-import {StockData} from "@/types/stock";
+import { StockData } from '@/types/stock-data';
 import { getTopStock} from "@/lib/api";
 import {Portfolio} from "@/types/Portfolio.ts";
 

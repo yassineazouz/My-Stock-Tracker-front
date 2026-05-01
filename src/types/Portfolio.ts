@@ -1,4 +1,4 @@
-import {Stock} from "@/components/portfolio/portfolio-table.tsx";
+import { Stock } from '@/types/Stock';
 
 export interface Portfolio {
     id: number;
@@ -8,6 +8,5 @@ export interface Portfolio {
     stocks: Stock[];
     activeAlerts: number;
     performancePercent: number;
-    walletValue : number
-
+    walletValue: number;
 }

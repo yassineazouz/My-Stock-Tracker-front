@@ -1,20 +1,20 @@
 import { TrendingUp, TrendingDown, RefreshCw, DollarSign, BarChart3, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchAllStocks } from '@/lib/api';
-import { StockData } from '@/types/stock';
+import { StockData } from '@/types/stock-data';
 import useSWR from 'swr';
 
-function StockPrice({ value }: { value: string }) {
+function StockPrice({ value }: { value: number }) {
     return (
         <div className="flex items-baseline gap-1">
             <DollarSign className="h-4 w-4 text-gray-400" />
-            <span className="text-2xl font-bold tracking-tight">{parseFloat(value).toFixed(2)}</span>
+            <span className="text-2xl font-bold tracking-tight">{value.toFixed(2)}</span>
         </div>
     );
 }
 
-function PriceChange({ change, percentChange }: { change: string; percentChange: number }) {
-    const isPositive = parseFloat(change) >= 0;
+function PriceChange({ change, percentChange }: { change: number; percentChange: number }) {
+    const isPositive = change >= 0;
     const Icon = isPositive ? TrendingUp : TrendingDown;
     const colorClass = isPositive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700';
 
@@ -89,7 +89,7 @@ export function MarketOverview() {
                                     <div>
                                         <StockPrice value={stock.close} />
                                         <p className="text-sm text-gray-500 mt-1">
-                                            {parseFloat(stock.change) >= 0 ? '+' : ''}{parseFloat(stock.change).toFixed(2)}$ today
+                                            {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)}$ today
                                         </p>
                                     </div>
 
@@ -100,7 +100,7 @@ export function MarketOverview() {
                                                 <span className="text-xs font-medium">Volume</span>
                                             </div>
                                             <p className="text-sm font-medium">
-                                                {(parseInt(stock.volume) / 1000000).toFixed(1)}M
+                                                {(stock.volume / 1000000).toFixed(1)}M
                                             </p>
                                         </div>
                                         <div>
@@ -109,7 +109,7 @@ export function MarketOverview() {
                                                 <span className="text-xs font-medium">Prev Close</span>
                                             </div>
                                             <p className="text-sm font-medium">
-                                                ${parseFloat(stock.previousClose).toFixed(2)}
+                                                ${stock.previousClose.toFixed(2)}
                                             </p>
                                         </div>
                                     </div>

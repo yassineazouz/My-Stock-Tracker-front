@@ -1,9 +1,11 @@
-import React, {useState, useEffect} from 'react';
-import {PortfolioTable, Stock} from '@/components/portfolio/portfolio-table';
-import {Plus, Wallet, X} from 'lucide-react';
-import useSWR from "swr";
-import {Portfolio as PortfolioEntity} from "@/types/Portfolio.ts";
-import {buyStock, getPortfolioData} from "@/lib/api.ts";
+import React, { useState, useEffect } from 'react';
+import { PortfolioTable } from '@/components/portfolio/portfolio-table';
+import { Stock } from '@/types/Stock';
+import { Plus, Wallet, X } from 'lucide-react';
+import useSWR from 'swr';
+import { usePortfolio } from '@/hooks/usePortfolio';
+import { buyStock, fetchAllStocks } from '@/lib/api';
+import { StockData } from '@/types/stock-data';
 
 interface StockFormData {
     symbol: string;
@@ -21,16 +23,6 @@ const AVAILABLE_STOCKS = [
     { symbol: 'TSLA', name: 'Tesla Inc.' },
 ];
 
-const STOCK_PRICES: { [key: string]: number } = {
-    'AAPL': 175.50,
-    'MSFT': 310.25,
-    'AMZN': 130.45,
-    'GOOGL': 140.20,
-    'NVDA': 450.75,
-    'META': 290.30,
-    'TSLA': 180.60,
-};
-
 export function Portfolio() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [stocks, setStocks] = useState<Stock[]>([]);
@@ -43,10 +35,11 @@ export function Portfolio() {
 
     const username = 'yassine';
 
-    const { data: portfolioData, mutate } = useSWR<PortfolioEntity>(
-        'portfolioData',
-        getPortfolioData
-    );
+    const { data: portfolioData, mutate } = usePortfolio();
+    const { data: marketData } = useSWR<StockData[]>('stocks', fetchAllStocks);
+
+    const livePrice = (symbol: string): number =>
+        marketData?.find((s) => s.symbol === symbol)?.close ?? 0;
 
     useEffect(() => {
         if (portfolioData?.stocks) {
@@ -56,15 +49,11 @@ export function Portfolio() {
 
     useEffect(() => {
         if (formData.symbol && formData.quantity) {
-            const currentPrice = STOCK_PRICES[formData.symbol] || 0;
-            const total = currentPrice * formData.quantity;
-            setTotalValue(total);
-            setFormData(prev => ({
-                ...prev,
-                purchasePrice: currentPrice
-            }));
+            const currentPrice = livePrice(formData.symbol);
+            setTotalValue(currentPrice * formData.quantity);
+            setFormData(prev => ({ ...prev, purchasePrice: currentPrice }));
         }
-    }, [formData.symbol, formData.quantity]);
+    }, [formData.symbol, formData.quantity, marketData]);
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -76,12 +65,10 @@ export function Portfolio() {
                 setFormData(prev => ({ ...prev, symbol: value }));
                 break;
             case 'quantity':
-                const quantity = parseInt(value) || 0;
-                setFormData(prev => ({ ...prev, quantity: Math.max(0, quantity) }));
+                setFormData(prev => ({ ...prev, quantity: Math.max(0, parseInt(value) || 0) }));
                 break;
             case 'purchasePrice':
-                const price = parseFloat(value) || 0;
-                setFormData(prev => ({ ...prev, purchasePrice: Math.max(0, price) }));
+                setFormData(prev => ({ ...prev, purchasePrice: Math.max(0, parseFloat(value) || 0) }));
                 break;
         }
     };
@@ -94,23 +81,21 @@ export function Portfolio() {
             return;
         }
 
-
-        const currentPrice = STOCK_PRICES[formData.symbol];
-        const totalValue = currentPrice * formData.quantity;
-        const gainLoss = totalValue - (formData.purchasePrice * formData.quantity);
-        const gainLossPercentage = (gainLoss / (formData.purchasePrice * formData.quantity)) * 100;
-
-        const selectedStock = AVAILABLE_STOCKS.find(stock => stock.symbol === formData.symbol);
+        const currentPrice = livePrice(formData.symbol);
+        const cost = formData.purchasePrice * formData.quantity;
+        const gainLoss = currentPrice * formData.quantity - cost;
+        const gainLossPercentage = cost > 0 ? (gainLoss / cost) * 100 : 0;
+        const selectedStock = AVAILABLE_STOCKS.find(s => s.symbol === formData.symbol);
 
         const newStock: Stock = {
             symbol: formData.symbol,
-            companyName: selectedStock?.name || `${formData.symbol} Inc.`,
+            companyName: selectedStock?.name ?? `${formData.symbol} Inc.`,
             quantity: formData.quantity,
             purchasePrice: formData.purchasePrice,
-            currentPrice: currentPrice,
-            totalValue: Number(totalValue.toFixed(2)),
+            currentPrice,
+            totalValue: Number((currentPrice * formData.quantity).toFixed(2)),
             gainLoss: Number(gainLoss.toFixed(2)),
-            gainLossPercentage: Number(gainLossPercentage.toFixed(2))
+            gainLossPercentage: Number(gainLossPercentage.toFixed(2)),
         };
 
         try {
@@ -118,10 +103,10 @@ export function Portfolio() {
             setIsModalOpen(false);
             setFormData({ symbol: '', quantity: 0, purchasePrice: 0 });
             setTotalValue(0);
-            mutate(); // ✅ only this will update state from backend
+            mutate();
         } catch (error) {
-            console.error("Error buying stock:", error);
-            alert("Failed to buy stock. Please try again.");
+            console.error('Error buying stock:', error);
+            alert('Failed to buy stock. Please try again.');
         }
     };
 

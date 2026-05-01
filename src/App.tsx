@@ -6,9 +6,7 @@ import { Portfolio } from './pages/portfolio';
 import { Alerts } from './pages/alerts';
 import { Settings as SettingsPage } from './pages/settings';
 import { Help } from './pages/help';
-import useSWR from "swr";
-import {getPortfolioData} from "@/lib/api.ts";
-import {Portfolio as PortfolioEntity} from "@/types/Portfolio.ts";
+import { usePortfolio } from '@/hooks/usePortfolio';
 
 function Sidebar() {
     return (
@@ -45,10 +43,7 @@ function Sidebar() {
 
 function Dashboard() {
 
-    const {data: portfolioData} = useSWR<PortfolioEntity>(
-        'portfolioData',
-        getPortfolioData
-    );
+    const { data: portfolioData } = usePortfolio();
     return (
         <div className="p-8">
             {/* Top row: title on left, wallet on right */}
