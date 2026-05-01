@@ -1,90 +1,135 @@
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
-import {LayoutDashboard, LineChart, Bell, Settings, HelpCircle, Wallet} from 'lucide-react';
-import { PortfolioSummary } from './components/dashboard/portfolio-summary';
-import { MarketOverview } from './components/dashboard/market-overview';
-import { Portfolio } from './pages/portfolio';
-import { Alerts } from './pages/alerts';
-import { Settings as SettingsPage } from './pages/settings';
-import { Help } from './pages/help';
+import { BrowserRouter as Router, NavLink, Route, Routes } from 'react-router-dom';
+import { Bell, HelpCircle, LayoutDashboard, LineChart, Settings, Wallet } from 'lucide-react';
+import { MarketOverview } from '@/components/dashboard/market-overview';
+import { PortfolioSummary } from '@/components/dashboard/portfolio-summary';
+import { Notice, Page } from '@/components/ui/page';
+import { Alerts } from '@/pages/alerts';
+import { Help } from '@/pages/help';
+import { Portfolio } from '@/pages/portfolio';
+import { Settings as SettingsPage } from '@/pages/settings';
 import { usePortfolio } from '@/hooks/usePortfolio';
+import { formatCurrency } from '@/lib/format';
+
+const navItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { icon: LineChart, label: 'Portfolio', path: '/portfolio' },
+  { icon: Bell, label: 'Alerts', path: '/alerts' },
+  { icon: Settings, label: 'Settings', path: '/settings' },
+  { icon: HelpCircle, label: 'Help', path: '/help' },
+];
 
 function Sidebar() {
-    return (
-        <div className="fixed inset-y-0 left-0 w-64 bg-gray-900 text-white p-4">
-            <div className="flex items-center gap-2 mb-8">
-                <LineChart className="h-8 w-8" />
-                <span className="text-xl font-bold">StockTracker</span>
-            </div>
-            <nav className="space-y-2">
-                {[
-                    { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-                    { icon: LineChart, label: 'Portfolio', path: '/portfolio' },
-                    { icon: Bell, label: 'Alerts', path: '/alerts' },
-                    { icon: Settings, label: 'Settings', path: '/settings' },
-                    { icon: HelpCircle, label: 'Help', path: '/help' },
-                ].map(({ icon: Icon, label, path }) => (
-                    <NavLink
-                        key={path}
-                        to={path}
-                        className={({ isActive }) =>
-                            `flex items-center gap-2 px-4 py-2 rounded transition-colors ${
-                                isActive ? 'bg-gray-700' : 'hover:bg-gray-800'
-                            }`
-                        }
-                    >
-                        <Icon className="h-5 w-5" />
-                        <span>{label}</span>
-                    </NavLink>
-                ))}
-            </nav>
+  return (
+    <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-800 bg-slate-950 px-4 py-5 text-white lg:block">
+      <div className="mb-8 flex items-center gap-3 px-2">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500 text-slate-950">
+          <LineChart className="h-6 w-6" />
         </div>
-    );
+        <div>
+          <p className="text-lg font-bold leading-tight">StockTracker</p>
+          <p className="text-xs text-slate-400">Portfolio workspace</p>
+        </div>
+      </div>
+
+      <nav className="space-y-1">
+        {navItems.map(({ icon: Icon, label, path }) => (
+          <NavLink
+            key={path}
+            to={path}
+            className={({ isActive }) =>
+              `flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition ${
+                isActive
+                  ? 'bg-white text-slate-950'
+                  : 'text-slate-300 hover:bg-slate-900 hover:text-white'
+              }`
+            }
+          >
+            <Icon className="h-4 w-4" />
+            <span>{label}</span>
+          </NavLink>
+        ))}
+      </nav>
+    </aside>
+  );
+}
+
+function MobileNav() {
+  return (
+    <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-3 py-2 backdrop-blur lg:hidden">
+      <div className="mb-2 flex items-center gap-2 px-1">
+        <LineChart className="h-5 w-5 text-emerald-600" />
+        <span className="font-bold">StockTracker</span>
+      </div>
+      <div className="flex gap-1 overflow-x-auto">
+        {navItems.map(({ icon: Icon, label, path }) => (
+          <NavLink
+            key={path}
+            to={path}
+            className={({ isActive }) =>
+              `flex min-w-max items-center gap-2 rounded-md px-3 py-2 text-sm ${
+                isActive ? 'bg-slate-950 text-white' : 'text-slate-600'
+              }`
+            }
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </NavLink>
+        ))}
+      </div>
+    </nav>
+  );
 }
 
 function Dashboard() {
+  const { data: portfolioData, error, isLoading } = usePortfolio();
 
-    const { data: portfolioData } = usePortfolio();
-    return (
-        <div className="p-8">
-            {/* Top row: title on left, wallet on right */}
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">Dashboard</h1>
-
-                {/* Small Wallet Card on Right */}
-                <div className="flex items-center gap-2 bg-white shadow-md rounded-xl px-4 py-2">
-                    <Wallet className="h-5 w-5 text-primary" />
-                    <div className="text-right">
-                        <p className="text-lg font-semibold">${portfolioData?.walletValue.toLocaleString()}</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Dashboard sections */}
-            <div className="space-y-8">
-                <PortfolioSummary portfolioData={portfolioData} />
-                <MarketOverview />
-            </div>
+  return (
+    <Page
+      title="Dashboard"
+      eyebrow="Overview"
+      actions={
+        <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+          <Wallet className="h-4 w-4 text-emerald-600" />
+          <span className="text-sm font-semibold text-slate-950">
+            {formatCurrency(portfolioData?.walletValue)}
+          </span>
         </div>
-    );
+      }
+    >
+      <div className="space-y-6">
+        {error && (
+          <Notice tone="danger">
+            Backend is not returning the portfolio. Check the API URL and backend port.
+          </Notice>
+        )}
+
+        {isLoading && <Notice>Loading portfolio data...</Notice>}
+
+        <PortfolioSummary portfolioData={portfolioData} />
+        <MarketOverview />
+      </div>
+    </Page>
+  );
 }
 
 function App() {
-    return (
-        <Router>
-            <div className="min-h-screen bg-gray-100">
-                <Sidebar />
-                <div className="ml-64">
-                    <Routes>
-                        <Route path="/" element={<Dashboard />} />
-                        <Route path="/portfolio" element={<Portfolio />} />
-                        <Route path="/alerts" element={<Alerts />} />
-                        <Route path="/settings" element={<SettingsPage />} />
-                        <Route path="/help" element={<Help />} />
-                    </Routes>
-                </div>
-            </div>
-        </Router>
-    );
+  return (
+    <Router>
+      <div className="min-h-screen bg-slate-50">
+        <Sidebar />
+        <MobileNav />
+        <div className="lg:pl-64">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/alerts" element={<Alerts />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/help" element={<Help />} />
+          </Routes>
+        </div>
+      </div>
+    </Router>
+  );
 }
 
 export default App;

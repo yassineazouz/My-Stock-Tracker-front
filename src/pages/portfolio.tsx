@@ -1,234 +1,212 @@
-import React, { useState, useEffect } from 'react';
-import { PortfolioTable } from '@/components/portfolio/portfolio-table';
-import { Stock } from '@/types/Stock';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Plus, Wallet, X } from 'lucide-react';
 import useSWR from 'swr';
-import { usePortfolio } from '@/hooks/usePortfolio';
+import { PortfolioTable } from '@/components/portfolio/portfolio-table';
+import { Notice, Page } from '@/components/ui/page';
 import { buyStock, fetchAllStocks } from '@/lib/api';
+import { formatCurrency } from '@/lib/format';
+import { usePortfolio } from '@/hooks/usePortfolio';
+import { Stock } from '@/types/Stock';
 import { StockData } from '@/types/stock-data';
 
 interface StockFormData {
-    symbol: string;
-    quantity: number;
-    purchasePrice: number;
+  symbol: string;
+  quantity: number;
 }
 
 const AVAILABLE_STOCKS = [
-    { symbol: 'AAPL', name: 'Apple Inc.' },
-    { symbol: 'MSFT', name: 'Microsoft Corporation' },
-    { symbol: 'AMZN', name: 'Amazon.com Inc.' },
-    { symbol: 'GOOGL', name: 'Alphabet Inc.' },
-    { symbol: 'NVDA', name: 'NVIDIA Corporation' },
-    { symbol: 'META', name: 'Meta Platforms Inc.' },
-    { symbol: 'TSLA', name: 'Tesla Inc.' },
+  { symbol: 'AAPL', name: 'Apple Inc.' },
+  { symbol: 'MSFT', name: 'Microsoft Corporation' },
+  { symbol: 'AMZN', name: 'Amazon.com Inc.' },
+  { symbol: 'GOOGL', name: 'Alphabet Inc.' },
+  { symbol: 'NVDA', name: 'NVIDIA Corporation' },
+  { symbol: 'META', name: 'Meta Platforms Inc.' },
+  { symbol: 'TSLA', name: 'Tesla Inc.' },
 ];
 
+const defaultForm: StockFormData = {
+  symbol: '',
+  quantity: 0,
+};
+
 export function Portfolio() {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [stocks, setStocks] = useState<Stock[]>([]);
-    const [formData, setFormData] = useState<StockFormData>({
-        symbol: '',
-        quantity: 0,
-        purchasePrice: 0,
-    });
-    const [totalValue, setTotalValue] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState<StockFormData>(defaultForm);
+  const username = 'yassine';
 
-    const username = 'yassine';
+  const { data: portfolioData, error: portfolioError, mutate } = usePortfolio();
+  const { data: marketData, error: marketError, isLoading: isMarketLoading } = useSWR<StockData[]>(
+    'stocks',
+    fetchAllStocks
+  );
 
-    const { data: portfolioData, mutate } = usePortfolio();
-    const { data: marketData } = useSWR<StockData[]>('stocks', fetchAllStocks);
+  const stocks = portfolioData?.stocks ?? [];
 
-    const livePrice = (symbol: string): number =>
-        marketData?.find((s) => s.symbol === symbol)?.close ?? 0;
+  const livePrice = useCallback(
+    (symbol: string): number => marketData?.find((stock) => stock.symbol === symbol)?.close ?? 0,
+    [marketData]
+  );
 
-    useEffect(() => {
-        if (portfolioData?.stocks) {
-            setStocks(portfolioData.stocks);
-        }
-    }, [portfolioData]);
+  const selectedStock = useMemo(
+    () => AVAILABLE_STOCKS.find((stock) => stock.symbol === formData.symbol),
+    [formData.symbol]
+  );
 
-    useEffect(() => {
-        if (formData.symbol && formData.quantity) {
-            const currentPrice = livePrice(formData.symbol);
-            setTotalValue(currentPrice * formData.quantity);
-            setFormData(prev => ({ ...prev, purchasePrice: currentPrice }));
-        }
-    }, [formData.symbol, formData.quantity, marketData]);
+  const currentPrice = formData.symbol ? livePrice(formData.symbol) : 0;
+  const totalValue = currentPrice * formData.quantity;
+  const canSubmit = Boolean(formData.symbol && formData.quantity > 0 && currentPrice > 0);
 
-    const handleInputChange = (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-        field: keyof StockFormData
-    ) => {
-        const value = e.target.value;
-        switch (field) {
-            case 'symbol':
-                setFormData(prev => ({ ...prev, symbol: value }));
-                break;
-            case 'quantity':
-                setFormData(prev => ({ ...prev, quantity: Math.max(0, parseInt(value) || 0) }));
-                break;
-            case 'purchasePrice':
-                setFormData(prev => ({ ...prev, purchasePrice: Math.max(0, parseFloat(value) || 0) }));
-                break;
-        }
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setFormData(defaultForm);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!canSubmit) {
+      return;
+    }
+
+    const newStock: Stock = {
+      symbol: formData.symbol,
+      companyName: selectedStock?.name ?? `${formData.symbol} Inc.`,
+      quantity: formData.quantity,
+      purchasePrice: currentPrice,
+      currentPrice,
+      totalValue: Number(totalValue.toFixed(2)),
+      gainLoss: 0,
+      gainLossPercentage: 0,
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    try {
+      await buyStock(username, newStock);
+      closeModal();
+      mutate();
+    } catch (error) {
+      console.error('Error buying stock:', error);
+    }
+  };
 
-        if (!formData.symbol || formData.quantity <= 0) {
-            alert('Please fill in all fields with valid values');
-            return;
-        }
+  return (
+    <Page
+      title="Portfolio"
+      eyebrow="Holdings"
+      actions={
+        <>
+          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+            <Wallet className="h-4 w-4 text-emerald-600" />
+            <span className="text-sm font-semibold">{formatCurrency(portfolioData?.walletValue)}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+          >
+            <Plus className="h-4 w-4" />
+            Add Stock
+          </button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        {portfolioError && (
+          <Notice tone="danger">Portfolio could not be loaded. Check the backend connection.</Notice>
+        )}
+        <PortfolioTable stocks={stocks} />
+      </div>
 
-        const currentPrice = livePrice(formData.symbol);
-        const cost = formData.purchasePrice * formData.quantity;
-        const gainLoss = currentPrice * formData.quantity - cost;
-        const gainLossPercentage = cost > 0 ? (gainLoss / cost) * 100 : 0;
-        const selectedStock = AVAILABLE_STOCKS.find(s => s.symbol === formData.symbol);
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b px-5 py-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-950">Add Stock</h2>
+                <p className="text-sm text-slate-500">Create a new position in your portfolio.</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeModal}
+                className="rounded-md p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-        const newStock: Stock = {
-            symbol: formData.symbol,
-            companyName: selectedStock?.name ?? `${formData.symbol} Inc.`,
-            quantity: formData.quantity,
-            purchasePrice: formData.purchasePrice,
-            currentPrice,
-            totalValue: Number((currentPrice * formData.quantity).toFixed(2)),
-            gainLoss: Number(gainLoss.toFixed(2)),
-            gainLossPercentage: Number(gainLossPercentage.toFixed(2)),
-        };
+            <form onSubmit={handleSubmit} className="space-y-4 p-5">
+              {marketError && (
+                <Notice tone="danger">Market prices are unavailable. Try again after refreshing data.</Notice>
+              )}
 
-        try {
-            await buyStock(username, newStock);
-            setIsModalOpen(false);
-            setFormData({ symbol: '', quantity: 0, purchasePrice: 0 });
-            setTotalValue(0);
-            mutate();
-        } catch (error) {
-            console.error('Error buying stock:', error);
-            alert('Failed to buy stock. Please try again.');
-        }
-    };
-
-    return (
-        <div className="p-8">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">Portfolio</h1>
-                <div className="flex items-center gap-2 bg-white shadow-md rounded-xl px-4 py-2">
-                    <Wallet className="h-5 w-5 text-primary" />
-                    <div className="text-right">
-                        <p className="text-lg font-semibold">{portfolioData?.walletValue} $</p>
-                    </div>
-                </div>
-                <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
-                    onClick={() => setIsModalOpen(true)}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Stock Symbol</label>
+                <select
+                  required
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-500"
+                  value={formData.symbol}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, symbol: e.target.value }))}
                 >
-                    <Plus className="w-5 h-5" />
-                    Add Stock
-                </button>
-            </div>
+                  <option value="">Select a stock</option>
+                  {AVAILABLE_STOCKS.map((stock) => (
+                    <option key={stock.symbol} value={stock.symbol}>
+                      {stock.symbol} - {stock.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-            <div className="bg-white rounded-lg shadow">
-                <PortfolioTable stocks={stocks} />
-            </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Quantity</label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  step="1"
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500"
+                  value={formData.quantity || ''}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      quantity: Math.max(0, Number.parseInt(e.target.value, 10) || 0),
+                    }))
+                  }
+                />
+              </div>
 
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg p-6 w-full max-w-md">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-2xl font-bold">Add New Stock</h2>
-                            <button
-                                onClick={() => setIsModalOpen(false)}
-                                className="text-gray-500 hover:text-gray-700"
-                            >
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Stock Symbol
-                                </label>
-                                <select
-                                    required
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    value={formData.symbol}
-                                    onChange={(e) => handleInputChange(e, 'symbol')}
-                                >
-                                    <option value="">Select a stock</option>
-                                    {AVAILABLE_STOCKS.map((stock) => (
-                                        <option key={stock.symbol} value={stock.symbol}>
-                                            {stock.symbol} - {stock.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Quantity
-                                </label>
-                                <input
-                                    type="number"
-                                    required
-                                    min="1"
-                                    step="1"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    value={formData.quantity || ''}
-                                    onChange={(e) => handleInputChange(e, 'quantity')}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Current Market Price (per share)
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2 text-gray-500">$</span>
-                                    <input
-                                        type="number"
-                                        readOnly
-                                        className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-                                        value={formData.purchasePrice.toFixed(2)}
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Total Value
-                                </label>
-                                <div className="relative">
-                                    <span className="absolute left-3 top-2 text-gray-500">$</span>
-                                    <input
-                                        type="number"
-                                        readOnly
-                                        className="w-full pl-8 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-md"
-                                        value={totalValue.toFixed(2)}
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex justify-end gap-2 mt-6">
-                                <button
-                                    type="button"
-                                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
-                                    onClick={() => {
-                                        setIsModalOpen(false);
-                                        setFormData({ symbol: '', quantity: 0, purchasePrice: 0 });
-                                        setTotalValue(0);
-                                    }}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    Add Stock
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+              <div className="grid grid-cols-2 gap-3 rounded-md bg-slate-50 p-3">
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Market Price</p>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {isMarketLoading ? 'Loading...' : formatCurrency(currentPrice)}
+                  </p>
                 </div>
-            )}
+                <div>
+                  <p className="text-xs font-medium text-slate-500">Order Value</p>
+                  <p className="text-sm font-semibold text-slate-900">{formatCurrency(totalValue)}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 border-t pt-4">
+                <button
+                  type="button"
+                  className="rounded-md px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!canSubmit}
+                  className="rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Add Stock
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-    );
+      )}
+    </Page>
+  );
 }

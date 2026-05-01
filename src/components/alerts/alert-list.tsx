@@ -1,94 +1,79 @@
-import React from 'react';
-import { Bell, Trash2, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Trash2 } from 'lucide-react';
+import { formatCurrency } from '@/lib/format';
+import { PriceAlert } from '@/types/PriceAlert';
 
-interface PriceAlert {
-  id: string;
-  symbol: string;
-  companyName: string;
-  targetPrice: number;
-  currentPrice: number;
-  type: 'above' | 'below';
-  createdAt: string;
+interface AlertListProps {
+  alerts: PriceAlert[];
+  deletingId?: number | null;
+  onDelete: (alertId: number) => void;
 }
 
-const mockAlerts: PriceAlert[] = [
-  {
-    id: '1',
-    symbol: 'AAPL',
-    companyName: 'Apple Inc.',
-    targetPrice: 180.00,
-    currentPrice: 175.50,
-    type: 'above',
-    createdAt: '2024-03-15'
-  },
-  {
-    id: '2',
-    symbol: 'MSFT',
-    companyName: 'Microsoft Corporation',
-    targetPrice: 300.00,
-    currentPrice: 310.25,
-    type: 'below',
-    createdAt: '2024-03-14'
-  },
-  {
-    id: '3',
-    symbol: 'GOOGL',
-    companyName: 'Alphabet Inc.',
-    targetPrice: 3000.00,
-    currentPrice: 2950.75,
-    type: 'above',
-    createdAt: '2024-03-13'
+export function AlertList({ alerts, deletingId, onDelete }: AlertListProps) {
+  if (alerts.length === 0) {
+    return (
+      <div className="flex min-h-64 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
+        <div className="mb-3 rounded-lg bg-slate-100 p-3 text-slate-500">
+          <ArrowUpCircle className="h-6 w-6" />
+        </div>
+        <h2 className="text-lg font-semibold text-slate-950">No alerts yet</h2>
+        <p className="mt-1 max-w-sm text-sm text-slate-500">
+          Add a price alert to watch a symbol and keep your portfolio moves visible.
+        </p>
+      </div>
+    );
   }
-];
-
-export function AlertList() {
-  const handleDeleteAlert = (id: string) => {
-    // TODO: Implement delete functionality
-    console.log('Delete alert:', id);
-  };
 
   return (
-    <div className="space-y-4">
-      {mockAlerts.map((alert) => (
-        <div
-          key={alert.id}
-          className="bg-white rounded-lg shadow p-4 flex items-center justify-between"
-        >
-          <div className="flex items-center space-x-4">
-            <div className={`p-2 rounded-full ${
-              alert.type === 'above' ? 'bg-green-100' : 'bg-red-100'
-            }`}>
-              {alert.type === 'above' ? (
-                <ArrowUpCircle className="w-6 h-6 text-green-600" />
-              ) : (
-                <ArrowDownCircle className="w-6 h-6 text-red-600" />
-              )}
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+      <div className="divide-y divide-slate-100">
+        {alerts.map((alert) => {
+          const isAbove = alert.direction === 'ABOVE';
+          const Icon = isAbove ? ArrowUpCircle : ArrowDownCircle;
+          const tone =
+            isAbove
+              ? 'bg-emerald-50 text-emerald-700'
+              : 'bg-rose-50 text-rose-700';
+          const createdAt = new Intl.DateTimeFormat('en-US', {
+            dateStyle: 'medium',
+          }).format(new Date(alert.createdAt));
+
+          return (
+            <div key={alert.id} className="flex items-center justify-between gap-4 p-4">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className={`rounded-lg p-2 ${tone}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-slate-950">{alert.symbol}</span>
+                    <span className="truncate text-sm text-slate-500">{alert.companyName}</span>
+                  </div>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Trigger {isAbove ? 'above' : 'below'} {formatCurrency(alert.targetPrice)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="hidden text-right sm:block">
+                  <p className="text-sm font-semibold text-slate-900">
+                    {alert.currentPrice > 0 ? formatCurrency(alert.currentPrice) : 'No quote'}
+                  </p>
+                  <p className="text-xs text-slate-500">{createdAt}</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={deletingId === alert.id}
+                  onClick={() => onDelete(alert.id)}
+                  className="rounded-md p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label={`Delete ${alert.symbol} alert`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-semibold">{alert.symbol}</span>
-                <span className="text-gray-500">•</span>
-                <span className="text-gray-500">{alert.companyName}</span>
-              </div>
-              <div className="text-sm text-gray-500">
-                Alert when price goes {alert.type}{' '}
-                <span className="font-medium">${alert.targetPrice.toFixed(2)}</span>
-              </div>
-              <div className="text-sm text-gray-400">
-                Current price: ${alert.currentPrice.toFixed(2)}
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => handleDeleteAlert(alert.id)}
-              className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-            >
-              <Trash2 className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      ))}
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -1,135 +1,103 @@
-import React from 'react';
-import {
-  LineChart,
-  Bell,
-  PlusCircle,
-  Settings,
-  TrendingUp,
-  RefreshCw,
-  HelpCircle,
-  BookOpen
-} from 'lucide-react';
+import { Bell, BookOpen, LineChart, PlusCircle, RefreshCw, Settings, TrendingUp } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Page } from '@/components/ui/page';
 
-interface HelpSectionProps {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}
-
-function HelpSection({ title, icon, children }: HelpSectionProps) {
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="text-blue-600">{icon}</div>
-        <h2 className="text-xl font-semibold">{title}</h2>
-      </div>
-      <div className="text-gray-600 space-y-3">{children}</div>
-    </div>
-  );
-}
+const sections = [
+  {
+    title: 'Getting Started',
+    icon: LineChart,
+    items: [
+      'Add positions from the Portfolio page.',
+      'Track portfolio value and market movement from Dashboard.',
+      'Use alerts to monitor target prices.',
+    ],
+  },
+  {
+    title: 'Managing Portfolio',
+    icon: PlusCircle,
+    items: [
+      'Choose a supported symbol.',
+      'Enter quantity and confirm the current market price.',
+      'Review total position value after saving.',
+    ],
+  },
+  {
+    title: 'Alerts',
+    icon: Bell,
+    items: [
+      'Create target prices for symbols you follow.',
+      'Use above or below triggers depending on your strategy.',
+      'Keep alerts focused to avoid noise.',
+    ],
+  },
+  {
+    title: 'Dashboard',
+    icon: TrendingUp,
+    items: [
+      'Portfolio cards summarize holdings, value, alerts, and top performer.',
+      'Market overview shows live quote data for tracked stocks.',
+      'Use refresh when you want to request fresh prices.',
+    ],
+  },
+  {
+    title: 'Settings',
+    icon: Settings,
+    items: [
+      'Adjust currency and refresh preferences.',
+      'Configure notification behavior.',
+      'Theme support is ready for a future dark mode pass.',
+    ],
+  },
+  {
+    title: 'Data Refresh',
+    icon: RefreshCw,
+    items: [
+      'Market prices depend on the backend and TwelveData key.',
+      'Cached quotes are used when available.',
+      'Backend errors are shown inline instead of blank screens.',
+    ],
+  },
+];
 
 export function Help() {
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <BookOpen className="w-8 h-8 text-blue-600" />
-          <h1 className="text-3xl font-bold">Help & Documentation</h1>
-        </div>
-        <p className="text-gray-600">
-          Welcome to StockTracker! This guide will help you understand how to use
-          all the features of your portfolio tracking application.
-        </p>
-      </div>
-
-      <div className="space-y-6">
-        <HelpSection title="Getting Started" icon={<LineChart className="w-5 h-5" />}>
-          <p>
-            StockTracker helps you monitor your stock investments in one place.
-            Here's how to get started:
-          </p>
-          <ul className="list-disc pl-6 mt-2 space-y-2">
-            <li>Add your stocks using the "Add Stock" button in the Portfolio page</li>
-            <li>Track your portfolio's performance in real-time</li>
-            <li>Set up price alerts to stay informed about market movements</li>
-            <li>Customize your experience through the Settings page</li>
-          </ul>
-        </HelpSection>
-
-        <HelpSection title="Managing Your Portfolio" icon={<PlusCircle className="w-5 h-5" />}>
-          <p className="mb-3">To add a new stock to your portfolio:</p>
-          <ol className="list-decimal pl-6 space-y-2">
-            <li>Click the "Add Stock" button in the Portfolio page</li>
-            <li>Enter the stock symbol (e.g., AAPL for Apple Inc.)</li>
-            <li>Specify the number of shares you own</li>
-            <li>Enter your purchase price per share</li>
-            <li>Click "Add Stock" to save</li>
-          </ol>
-          <p className="mt-3">
-            Your portfolio will automatically calculate your total value, gains/losses,
-            and performance metrics.
-          </p>
-        </HelpSection>
-
-        <HelpSection title="Setting Up Alerts" icon={<Bell className="w-5 h-5" />}>
-          <p>Price alerts help you stay informed about market movements:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-2">
-            <li>Navigate to the Alerts page</li>
-            <li>Click "New Alert" to create a price alert</li>
-            <li>Choose a stock and set your target price</li>
-            <li>Select whether to trigger the alert when the price goes above or below your target</li>
-            <li>You'll receive notifications when your conditions are met</li>
-          </ul>
-        </HelpSection>
-
-        <HelpSection title="Understanding Your Dashboard" icon={<TrendingUp className="w-5 h-5" />}>
-          <p>Your dashboard provides key insights at a glance:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-2">
-            <li>
-              <strong>Total Portfolio Value:</strong> The current value of all your holdings
-            </li>
-            <li>
-              <strong>Performance Metrics:</strong> Overall gains/losses and percentages
-            </li>
-            <li>
-              <strong>Stock Distribution:</strong> Breakdown of your portfolio by sectors
-            </li>
-            <li>
-              <strong>Top Performers:</strong> Your best-performing investments
-            </li>
-          </ul>
-        </HelpSection>
-
-        <HelpSection title="Customizing Settings" icon={<Settings className="w-5 h-5" />}>
-          <p>Personalize your StockTracker experience:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-2">
-            <li>Change your preferred currency display</li>
-            <li>Adjust the data refresh rate</li>
-            <li>Toggle between light and dark themes</li>
-            <li>Manage notification preferences</li>
-          </ul>
-        </HelpSection>
-
-        <HelpSection title="Tips & Best Practices" icon={<HelpCircle className="w-5 h-5" />}>
-          <ul className="list-disc pl-6 space-y-2">
-            <li>Regularly review your portfolio to ensure data accuracy</li>
-            <li>Set realistic price alerts to avoid notification fatigue</li>
-            <li>Use the refresh button to get the latest market data</li>
-            <li>Keep your purchase prices updated for accurate gain/loss calculations</li>
-          </ul>
-        </HelpSection>
-
-        <div className="bg-blue-50 rounded-lg p-6 mt-8">
-          <div className="flex items-center gap-3 mb-4">
-            <RefreshCw className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-semibold text-blue-800">Need More Help?</h2>
+    <Page title="Help" eyebrow="Guide">
+      <div className="max-w-5xl">
+        <div className="mb-5 flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-lg bg-emerald-50 p-2 text-emerald-700">
+            <BookOpen className="h-5 w-5" />
           </div>
-          <p className="text-blue-700">
-            This guide covers the basics of using StockTracker. For additional
-            support or feature requests, please contact our support team.
-          </p>
+          <div>
+            <h2 className="font-semibold text-slate-950">StockTracker basics</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              A quick reference for the app’s main workflows and data sources.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {sections.map(({ title, icon: Icon, items }) => (
+            <Card key={title}>
+              <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+                <div className="rounded-md bg-slate-100 p-2 text-slate-600">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <CardTitle>{title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2 text-sm text-slate-600">
+                  {items.map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <span className="mt-2 h-1.5 w-1.5 rounded-full bg-slate-300" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
-    </div>
+    </Page>
   );
 }

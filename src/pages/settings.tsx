@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Save } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Page } from '@/components/ui/page';
 
 interface Settings {
   currency: string;
@@ -18,101 +20,93 @@ export function Settings() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Save settings to backend
     console.log('Saving settings:', settings);
   };
 
   return (
-    <div className="p-8">
-      <div className="max-w-2xl">
-        <h1 className="text-3xl font-bold mb-8">Settings</h1>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white rounded-lg shadow p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Currency
-              </label>
-              <select
-                value={settings.currency}
-                onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
-              >
-                <option value="USD">USD ($)</option>
-                <option value="EUR">EUR (€)</option>
-                <option value="GBP">GBP (£)</option>
-                <option value="JPY">JPY (¥)</option>
-              </select>
-            </div>
+    <Page title="Settings" eyebrow="Preferences">
+      <form onSubmit={handleSubmit} className="max-w-3xl space-y-5">
+        <Card>
+          <CardHeader>
+            <CardTitle>Display</CardTitle>
+            <p className="text-sm text-slate-500">Control how values and UI preferences appear.</p>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">Currency</label>
+                <select
+                  value={settings.currency}
+                  onChange={(e) => setSettings({ ...settings, currency: e.target.value })}
+                  className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-500"
+                >
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                  <option value="JPY">JPY (¥)</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Refresh Rate (minutes)
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="60"
-                value={settings.refreshRate}
-                onChange={(e) => setSettings({ ...settings, refreshRate: parseInt(e.target.value) })}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Theme
-              </label>
-              <div className="flex gap-4">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    value="light"
-                    checked={settings.theme === 'light'}
-                    onChange={(e) => setSettings({ ...settings, theme: e.target.value as 'light' | 'dark' })}
-                    className="mr-2"
-                  />
-                  Light
+              <div>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Refresh Rate
                 </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    value="dark"
-                    checked={settings.theme === 'dark'}
-                    onChange={(e) => setSettings({ ...settings, theme: e.target.value as 'light' | 'dark' })}
-                    className="mr-2"
-                  />
-                  Dark
-                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="60"
+                  value={settings.refreshRate}
+                  onChange={(e) =>
+                    setSettings({ ...settings, refreshRate: Number.parseInt(e.target.value, 10) })
+                  }
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500"
+                />
               </div>
             </div>
 
             <div>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={settings.notifications}
-                  onChange={(e) => setSettings({ ...settings, notifications: e.target.checked })}
-                  className="mr-2"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Enable Notifications
-                </span>
-              </label>
+              <label className="mb-2 block text-sm font-medium text-slate-700">Theme</label>
+              <div className="inline-flex rounded-md border border-slate-200 bg-slate-100 p-1">
+                {(['light', 'dark'] as const).map((theme) => (
+                  <button
+                    key={theme}
+                    type="button"
+                    onClick={() => setSettings({ ...settings, theme })}
+                    className={`rounded px-3 py-1.5 text-sm font-medium capitalize transition ${
+                      settings.theme === theme
+                        ? 'bg-white text-slate-950 shadow-sm'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    {theme}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
 
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors"
-            >
-              <Save className="w-4 h-4" />
-              Save Settings
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+            <label className="flex items-center justify-between rounded-md border border-slate-200 p-3">
+              <span>
+                <span className="block text-sm font-medium text-slate-800">Notifications</span>
+                <span className="text-sm text-slate-500">Enable browser and price alert updates.</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={settings.notifications}
+                onChange={(e) => setSettings({ ...settings, notifications: e.target.checked })}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+            </label>
+          </CardContent>
+        </Card>
+
+        <button
+          type="submit"
+          className="inline-flex items-center gap-2 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+        >
+          <Save className="h-4 w-4" />
+          Save Settings
+        </button>
+      </form>
+    </Page>
   );
 }
