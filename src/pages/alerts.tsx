@@ -1,8 +1,9 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { Bell, Plus, X } from 'lucide-react';
+import useSWR from 'swr';
 import { AlertList } from '@/components/alerts/alert-list';
 import { Notice, Page } from '@/components/ui/page';
-import { createAlert, deleteAlert, fetchAlerts } from '@/lib/api';
+import { checkAlertsNow, createAlert, deleteAlert, fetchAlerts } from '@/lib/api';
 import { PriceAlert, PriceAlertRequest } from '@/types/PriceAlert';
 
 const initialForm: PriceAlertRequest = {
@@ -13,34 +14,23 @@ const initialForm: PriceAlertRequest = {
 };
 
 export function Alerts() {
-  const [alerts, setAlerts] = useState<PriceAlert[]>([]);
+  const { data: alerts = [], error: loadError, isLoading, mutate } = useSWR<PriceAlert[]>(
+    'alerts',
+    fetchAlerts
+  );
   const [form, setForm] = useState<PriceAlertRequest>(initialForm);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadAlerts();
-  }, []);
-
-  async function loadAlerts() {
-    try {
-      setIsLoading(true);
-      setError(null);
-      setAlerts(await fetchAlerts());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load alerts');
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSaving(true);
-    setError(null);
+    setActionError(null);
+    setMessage(null);
 
     try {
       const saved = await createAlert({
@@ -49,11 +39,11 @@ export function Alerts() {
         companyName: form.companyName?.trim(),
         targetPrice: Number(form.targetPrice),
       });
-      setAlerts((current) => [saved, ...current]);
+      await mutate((current) => [saved, ...(current ?? [])], { revalidate: false });
       setForm(initialForm);
       setIsFormOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create alert');
+      setActionError(err instanceof Error ? err.message : 'Failed to create alert');
     } finally {
       setIsSaving(false);
     }
@@ -61,35 +51,68 @@ export function Alerts() {
 
   async function handleDelete(alertId: number) {
     setDeletingId(alertId);
-    setError(null);
+    setActionError(null);
+    setMessage(null);
 
     try {
       await deleteAlert(alertId);
-      setAlerts((current) => current.filter((alert) => alert.id !== alertId));
+      await mutate((current) => current?.filter((a) => a.id !== alertId), { revalidate: false });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete alert');
+      setActionError(err instanceof Error ? err.message : 'Failed to delete alert');
     } finally {
       setDeletingId(null);
     }
   }
+
+  async function handleCheckNow() {
+    setIsChecking(true);
+    setActionError(null);
+    setMessage(null);
+
+    try {
+      const triggered = await checkAlertsNow();
+      await mutate();
+      setMessage(
+        triggered.length === 1 ? '1 alert was triggered.' : `${triggered.length} alerts were triggered.`
+      );
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Failed to check alerts');
+    } finally {
+      setIsChecking(false);
+    }
+  }
+
+  const displayError =
+    actionError ?? (loadError instanceof Error ? loadError.message : loadError ? 'Failed to load alerts' : null);
 
   return (
     <Page
       title="Price Alerts"
       eyebrow="Notifications"
       actions={
-        <button
-          type="button"
-          onClick={() => setIsFormOpen(true)}
-          className="inline-flex items-center gap-2 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
-        >
-          <Plus className="h-4 w-4" />
-          New Alert
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={handleCheckNow}
+            disabled={isChecking}
+            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isChecking ? 'Checking...' : 'Check now'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsFormOpen(true)}
+            className="inline-flex items-center gap-2 rounded-md bg-slate-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+          >
+            <Plus className="h-4 w-4" />
+            New Alert
+          </button>
+        </>
       }
     >
       <div className="max-w-4xl space-y-4">
-        {error && <Notice tone="danger">{error}</Notice>}
+        {displayError && <Notice tone="danger">{displayError}</Notice>}
+        {message && <Notice tone="success">{message}</Notice>}
 
         {isFormOpen && (
           <form
