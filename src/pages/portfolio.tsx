@@ -1,12 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useMemo, useState } from 'react';
 import { Plus, Wallet, X } from 'lucide-react';
 import useSWR from 'swr';
 import { PortfolioTable } from '@/components/portfolio/portfolio-table';
 import { Notice, Page } from '@/components/ui/page';
-import { buyStock, fetchAllStocks } from '@/lib/api';
+import { BuyStockRequest, buyStock, fetchAllStocks, getCurrentUsername } from '@/lib/api';
 import { formatCurrency } from '@/lib/format';
 import { usePortfolio } from '@/hooks/usePortfolio';
-import { Stock } from '@/types/Stock';
 import { StockData } from '@/types/stock-data';
 
 interface StockFormData {
@@ -32,7 +31,8 @@ const defaultForm: StockFormData = {
 export function Portfolio() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<StockFormData>(defaultForm);
-  const username = 'yassine';
+  const [buyError, setBuyError] = useState<string | null>(null);
+  const username = getCurrentUsername();
 
   const { data: portfolioData, error: portfolioError, mutate } = usePortfolio();
   const { data: marketData, error: marketError, isLoading: isMarketLoading } = useSWR<StockData[]>(
@@ -59,32 +59,26 @@ export function Portfolio() {
   const closeModal = () => {
     setIsModalOpen(false);
     setFormData(defaultForm);
+    setBuyError(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!canSubmit) return;
 
-    if (!canSubmit) {
-      return;
-    }
-
-    const newStock: Stock = {
+    setBuyError(null);
+    const request: BuyStockRequest = {
       symbol: formData.symbol,
       companyName: selectedStock?.name ?? `${formData.symbol} Inc.`,
       quantity: formData.quantity,
-      purchasePrice: currentPrice,
-      currentPrice,
-      totalValue: Number(totalValue.toFixed(2)),
-      gainLoss: 0,
-      gainLossPercentage: 0,
     };
 
     try {
-      await buyStock(username, newStock);
+      await buyStock(username, request);
       closeModal();
       mutate();
-    } catch (error) {
-      console.error('Error buying stock:', error);
+    } catch (err) {
+      setBuyError(err instanceof Error ? err.message : 'Failed to buy stock');
     }
   };
 
@@ -138,6 +132,7 @@ export function Portfolio() {
               {marketError && (
                 <Notice tone="danger">Market prices are unavailable. Try again after refreshing data.</Notice>
               )}
+              {buyError && <Notice tone="danger">{buyError}</Notice>}
 
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">Stock Symbol</label>
