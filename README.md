@@ -1,105 +1,95 @@
+# Stock Portfolio Tracker — Frontend
 
-# ✅ Stock Portfolio Tracker
+> Version 1.0.0 · React 18 · TypeScript · Vite
 
-![image](https://github.com/user-attachments/assets/204b91c9-7eeb-4e5a-8642-d92f55f3e623)
+Single-page application for the Stock Portfolio Tracker. Displays live market data, portfolio holdings, performance metrics, and wallet balance.
 
-## 📝 Project Description
-This is a web-based stock portfolio tracker that allows users to track the performance of their stock market investments in real-time. Users can add stocks to their portfolio, view price trends, visualize interactive charts, calculate their gains and losses, and receive personalized alerts based on defined thresholds.
+![screenshot](https://github.com/user-attachments/assets/204b91c9-7eeb-4e5a-8642-d92f55f3e623)
 
-## Key Features:
-- ➕ Add stocks to your portfolio
-- 📊 View real-time stock data and price trends
-- 📉 Visualize your portfolio's performance with interactive charts
-- 💸 Track gains and losses in real-time
-- 🔔 Receive personalized alerts based on your defined thresholds
+---
 
-## 🧰 Technologies Used
-**Backend**:
-- Spring Boot
-- Spring Data JPA
-- PostgreSQL
-- REST API
+## Tech Stack
 
-**Frontend**:
-- React.js
-- TypeScript
-- Chart.js
+| Layer | Technology |
+|---|---|
+| Framework | React 18 |
+| Language | TypeScript 5 |
+| Build tool | Vite 5 |
+| Styling | Tailwind CSS 3 |
+| UI components | shadcn/ui + lucide-react |
+| Data fetching | SWR 2 |
+| Routing | React Router v6 |
+| API | Stock Portfolio Tracker Backend (Spring Boot) |
 
-**External API**:
-- Twelve Finance API (for real-time stock data)
+---
 
-## 🚀 Getting Started
-### Prerequisites
-Make sure the following tools are installed:
+## Project Structure
 
-- Java 17+
-- Node.js + npm
-- Maven
-
-### ⚙️ Setup Instructions
-
-**Backend (Spring Boot)**  
-Clone the repository and configure your `application.properties` file:
-
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/your_db_name
-spring.datasource.username=your_username
-spring.datasource.password=your_password
+```
+src/
+├── components/
+│   ├── dashboard/      # PortfolioSummary, MarketOverview
+│   ├── portfolio/      # PortfolioTable
+│   ├── alerts/         # AlertList
+│   └── ui/             # shadcn/ui primitives (Card, …)
+├── hooks/
+│   └── usePortfolio.ts # Shared SWR hook for portfolio data
+├── lib/
+│   └── api.ts          # HTTP layer (fetch wrappers)
+├── pages/              # Portfolio, Alerts, Settings, Help
+├── types/
+│   ├── Stock.ts        # Portfolio stock holding type
+│   ├── stock-data.ts   # Live market quote type (StockData)
+│   └── Portfolio.ts    # Portfolio aggregate type
+└── App.tsx             # Router + Sidebar + Dashboard
 ```
 
-Run the backend:
-```bash
-./mvnw spring-boot:run
-```
+---
 
-**Frontend (React)**  
-Navigate to the frontend directory:
+## Prerequisites
 
-```bash
-cd frontend
-```
+- Node.js 18+
+- npm 9+
+- Stock Portfolio Tracker Backend running on `http://localhost:8080`
 
-Install dependencies:
+---
+
+## Getting Started
+
+**1. Install dependencies**
+
 ```bash
 npm install
 ```
 
-Start the development server:
+**2. Start the development server**
+
 ```bash
-npm start
+npm run dev
 ```
 
-## 📁 Project Structure
+The app is available at `http://localhost:5173`.
+
+**3. Build for production**
+
+```bash
+npm run build
 ```
-├── backend
-│   └── src/main/java/... (Spring Boot App)
-├── frontend
-│   └── src/... (React App)
-```
 
-## 📬 API Endpoints
-Here are some sample REST API endpoints:
+---
 
-| Method | Endpoint                 | Description                   |
-|--------|--------------------------|-------------------------------|
-| GET    | `/api/stocks`             | Get all stocks in the portfolio |
-| POST   | `/api/stocks`             | Add a new stock to the portfolio |
-| PUT    | `/api/stocks/{symbol}`    | Update stock data by symbol    |
-| DELETE | `/api/stocks/{symbol}`    | Delete a stock from the portfolio |
+## Pages
 
-## 📌 Features
-- Real-time stock data fetching
-- Stock portfolio management
-- Interactive chart visualization (Chart.js)
-- Real-time gains/losses calculation
-- Personalized alerts for price thresholds
+| Route | Description |
+|-------|-------------|
+| `/` | Dashboard — portfolio summary cards + market overview |
+| `/portfolio` | Holdings table + add stock modal |
+| `/alerts` | Price alerts (UI only, backend pending) |
+| `/settings` | App settings (UI only, backend pending) |
+| `/help` | Help & documentation |
 
-## 🛠 Future Improvements
-- User authentication and role-based access
-- Multi-currency support
-- Mobile-friendly UI
-- Push notifications for stock alerts
+---
 
-## 👨‍💻 Author
+## Author
+
 Developed by **Yassine Azzouz**
-
