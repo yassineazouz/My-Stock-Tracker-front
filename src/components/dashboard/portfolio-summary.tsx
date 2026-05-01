@@ -25,10 +25,10 @@ export function PortfolioSummary({ portfolioData }: Props) {
                     <div className="text-2xl font-bold">${portfolioData?.totalValue}</div>
                     <p
                         className={`text-xs ${
-                            portfolioData?.performancePercent ?? 0 >= 0 ? 'text-green-500' : 'text-red-500'
+                            (portfolioData?.performancePercent ?? 0) >= 0 ? 'text-green-500' : 'text-red-500'
                         }`}
                     >
-                        {portfolioData?.performancePercent.toFixed(2)}% from initial investment
+                        {(portfolioData?.performancePercent ?? 0).toFixed(2)}% from initial investment
                     </p>
                 </CardContent>
             </Card>

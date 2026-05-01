@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
 import {LayoutDashboard, LineChart, Bell, Settings, HelpCircle, Wallet} from 'lucide-react';
 import { PortfolioSummary } from './components/dashboard/portfolio-summary';
 import { MarketOverview } from './components/dashboard/market-overview';
@@ -25,14 +25,18 @@ function Sidebar() {
                     { icon: Settings, label: 'Settings', path: '/settings' },
                     { icon: HelpCircle, label: 'Help', path: '/help' },
                 ].map(({ icon: Icon, label, path }) => (
-                    <a
+                    <NavLink
                         key={path}
-                        href={path}
-                        className="flex items-center gap-2 px-4 py-2 rounded hover:bg-gray-800 transition-colors"
+                        to={path}
+                        className={({ isActive }) =>
+                            `flex items-center gap-2 px-4 py-2 rounded transition-colors ${
+                                isActive ? 'bg-gray-700' : 'hover:bg-gray-800'
+                            }`
+                        }
                     >
                         <Icon className="h-5 w-5" />
                         <span>{label}</span>
-                    </a>
+                    </NavLink>
                 ))}
             </nav>
         </div>
