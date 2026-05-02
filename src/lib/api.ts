@@ -39,7 +39,12 @@ export function getStoredUser(): AuthUser | null {
     if (!raw) return null;
 
     try {
-        return JSON.parse(raw) as AuthUser;
+        const user = JSON.parse(raw) as AuthUser;
+        if (!user.username || !user.token) {
+            window.localStorage.removeItem(AUTH_STORAGE_KEY);
+            return null;
+        }
+        return user;
     } catch {
         window.localStorage.removeItem(AUTH_STORAGE_KEY);
         return null;
@@ -55,7 +60,29 @@ export function clearStoredUser() {
 }
 
 export function getCurrentUsername() {
-    return getStoredUser()?.username ?? 'yassine';
+    const username = getStoredUser()?.username;
+    if (!username) {
+        throw new Error('You must be logged in to use this feature.');
+    }
+    return username;
+}
+
+function authHeaders(): HeadersInit {
+    const token = getStoredUser()?.token;
+    if (!token) {
+        throw new Error('You must be logged in to use this feature.');
+    }
+
+    return {
+        Authorization: `Bearer ${token}`,
+    };
+}
+
+function jsonAuthHeaders(): HeadersInit {
+    return {
+        ...authHeaders(),
+        'Content-Type': 'application/json',
+    };
 }
 
 export async function login(request: LoginRequest): Promise<AuthUser> {
@@ -81,13 +108,17 @@ export async function signup(request: SignupRequest): Promise<AuthUser> {
 }
 
 export async function getTopStock(): Promise<StockData> {
-    const response = await fetch(API_URL + '/stocks/top-performer');
+    const response = await fetch(API_URL + '/stocks/top-performer', {
+        headers: authHeaders(),
+    });
     return parseJsonResponse<StockData>(response, 'Failed to fetch top stock');
 }
 
 
 export async function fetchAllStocks(): Promise<StockData[]> {
-    const response = await fetch(API_URL + '/stocks/all');
+    const response = await fetch(API_URL + '/stocks/all', {
+        headers: authHeaders(),
+    });
     const data = await parseJsonResponse<StockQuoteResponse[]>(response, 'Failed to fetch stock data');
     const mapped = data.map((stock) => ({
         symbol: stock.symbol,
@@ -104,7 +135,9 @@ export async function fetchAllStocks(): Promise<StockData[]> {
 
 
 export async function getPortfolioData(): Promise<Portfolio> {
-    const response = await fetch(API_URL + `/user/${getCurrentUsername()}`);
+    const response = await fetch(API_URL + `/user/${getCurrentUsername()}`, {
+        headers: authHeaders(),
+    });
     return parseJsonResponse<Portfolio>(response, 'Failed to fetch portfolio data');
 }
 
@@ -118,7 +151,7 @@ export interface BuyStockRequest {
 export async function buyStock(username: string, request: BuyStockRequest): Promise<Stock> {
     const response = await fetch(API_URL + `/user/stock/${username}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: jsonAuthHeaders(),
         body: JSON.stringify(request),
     });
     return parseJsonResponse<Stock>(response, 'Failed to buy stock');
@@ -127,6 +160,7 @@ export async function buyStock(username: string, request: BuyStockRequest): Prom
 export async function sellStock(stockId: number, username = getCurrentUsername()): Promise<void> {
     const response = await fetch(API_URL + `/user/${username}/stocks/${stockId}`, {
         method: 'DELETE',
+        headers: authHeaders(),
     });
     if (!response.ok) {
         let errorMessage = `Failed to sell stock (${response.status})`;
@@ -139,16 +173,16 @@ export async function sellStock(stockId: number, username = getCurrentUsername()
 }
 
 export async function fetchAlerts(username = getCurrentUsername()): Promise<PriceAlert[]> {
-    const response = await fetch(API_URL + `/alerts/${username}`);
+    const response = await fetch(API_URL + `/alerts/${username}`, {
+        headers: authHeaders(),
+    });
     return parseJsonResponse<PriceAlert[]>(response, 'Failed to fetch alerts');
 }
 
 export async function createAlert(alert: PriceAlertRequest, username = getCurrentUsername()): Promise<PriceAlert> {
     const response = await fetch(API_URL + `/alerts/${username}`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: jsonAuthHeaders(),
         body: JSON.stringify(alert),
     });
 
@@ -158,6 +192,7 @@ export async function createAlert(alert: PriceAlertRequest, username = getCurren
 export async function deleteAlert(alertId: number, username = getCurrentUsername()): Promise<void> {
     const response = await fetch(API_URL + `/alerts/${username}/${alertId}`, {
         method: 'DELETE',
+        headers: authHeaders(),
     });
 
     if (!response.ok) {
@@ -168,6 +203,7 @@ export async function deleteAlert(alertId: number, username = getCurrentUsername
 export async function checkAlertsNow(): Promise<PriceAlert[]> {
     const response = await fetch(API_URL + '/alerts/check', {
         method: 'POST',
+        headers: authHeaders(),
     });
 
     return parseJsonResponse<PriceAlert[]>(response, 'Failed to check alerts');

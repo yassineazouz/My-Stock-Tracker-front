@@ -4,9 +4,11 @@ import { MarketOverview } from '@/components/dashboard/market-overview';
 import { PortfolioSummary } from '@/components/dashboard/portfolio-summary';
 import { Notice, Page } from '@/components/ui/page';
 import { Alerts } from '@/pages/alerts';
+import { AuthPage } from '@/pages/auth';
 import { Help } from '@/pages/help';
 import { Portfolio } from '@/pages/portfolio';
 import { Settings as SettingsPage } from '@/pages/settings';
+import { useAuth } from '@/hooks/auth-context';
 import { usePortfolio } from '@/hooks/usePortfolio';
 import { formatCurrency } from '@/lib/format';
 
@@ -19,6 +21,8 @@ const navItems = [
 ];
 
 function Sidebar() {
+  const { user, logout } = useAuth();
+
   return (
     <aside className="fixed inset-y-0 left-0 hidden w-64 border-r border-slate-800 bg-slate-950 px-4 py-5 text-white lg:block">
       <div className="mb-8 flex items-center gap-3 px-2">
@@ -49,11 +53,25 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
+
+      <div className="absolute bottom-5 left-4 right-4 rounded-lg border border-slate-800 bg-slate-900 p-3">
+        <p className="truncate text-sm font-semibold">{user?.displayName}</p>
+        <p className="truncate text-xs text-slate-400">@{user?.username}</p>
+        <button
+          type="button"
+          onClick={logout}
+          className="mt-3 w-full rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-slate-200"
+        >
+          Logout
+        </button>
+      </div>
     </aside>
   );
 }
 
 function MobileNav() {
+  const { logout } = useAuth();
+
   return (
     <nav className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-3 py-2 backdrop-blur lg:hidden">
       <div className="mb-2 flex items-center gap-2 px-1">
@@ -75,6 +93,13 @@ function MobileNav() {
             {label}
           </NavLink>
         ))}
+        <button
+          type="button"
+          onClick={logout}
+          className="min-w-max rounded-md px-3 py-2 text-sm font-semibold text-rose-600"
+        >
+          Logout
+        </button>
       </div>
     </nav>
   );
@@ -113,6 +138,12 @@ function Dashboard() {
 }
 
 function App() {
+  const { user } = useAuth();
+
+  if (!user) {
+    return <AuthPage />;
+  }
+
   return (
     <Router>
       <div className="min-h-screen bg-slate-50">

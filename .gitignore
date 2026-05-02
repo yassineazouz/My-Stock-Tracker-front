@@ -9,6 +9,11 @@ dist/
 .env.local
 .env.*.local
 
+# Test output
+test-results/
+playwright-report/
+.playwright/
+
 # Logs
 logs/
 *.log

@@ -9,6 +9,9 @@ export interface PriceAlert {
   direction: AlertDirection;
   active: boolean;
   createdAt: string;
+  lastCheckedAt?: string;
+  triggeredAt?: string;
+  triggeredPrice?: number;
 }
 
 export interface PriceAlertRequest {

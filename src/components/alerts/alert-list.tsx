@@ -30,12 +30,20 @@ export function AlertList({ alerts, deletingId, onDelete }: AlertListProps) {
           const isAbove = alert.direction === 'ABOVE';
           const Icon = isAbove ? ArrowUpCircle : ArrowDownCircle;
           const tone =
-            isAbove
+            !alert.active
+              ? 'bg-slate-100 text-slate-500'
+              : isAbove
               ? 'bg-emerald-50 text-emerald-700'
               : 'bg-rose-50 text-rose-700';
           const createdAt = new Intl.DateTimeFormat('en-US', {
             dateStyle: 'medium',
           }).format(new Date(alert.createdAt));
+          const triggeredAt = alert.triggeredAt
+            ? new Intl.DateTimeFormat('en-US', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              }).format(new Date(alert.triggeredAt))
+            : null;
 
           return (
             <div key={alert.id} className="flex items-center justify-between gap-4 p-4">
@@ -47,10 +55,24 @@ export function AlertList({ alerts, deletingId, onDelete }: AlertListProps) {
                   <div className="flex items-center gap-2">
                     <span className="font-semibold text-slate-950">{alert.symbol}</span>
                     <span className="truncate text-sm text-slate-500">{alert.companyName}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        alert.active
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-slate-100 text-slate-600'
+                      }`}
+                    >
+                      {alert.active ? 'Active' : 'Triggered'}
+                    </span>
                   </div>
                   <p className="mt-1 text-sm text-slate-600">
                     Trigger {isAbove ? 'above' : 'below'} {formatCurrency(alert.targetPrice)}
                   </p>
+                  {triggeredAt && (
+                    <p className="mt-1 text-xs text-slate-500">
+                      Triggered at {formatCurrency(alert.triggeredPrice)} on {triggeredAt}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-4">

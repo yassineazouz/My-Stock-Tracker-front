@@ -3,7 +3,7 @@ import { Bell, Plus, X } from 'lucide-react';
 import useSWR from 'swr';
 import { AlertList } from '@/components/alerts/alert-list';
 import { Notice, Page } from '@/components/ui/page';
-import { checkAlertsNow, createAlert, deleteAlert, fetchAlerts } from '@/lib/api';
+import { checkAlertsNow, createAlert, deleteAlert, fetchAlerts, getCurrentUsername } from '@/lib/api';
 import { PriceAlert, PriceAlertRequest } from '@/types/PriceAlert';
 
 const initialForm: PriceAlertRequest = {
@@ -15,8 +15,8 @@ const initialForm: PriceAlertRequest = {
 
 export function Alerts() {
   const { data: alerts = [], error: loadError, isLoading, mutate } = useSWR<PriceAlert[]>(
-    'alerts',
-    fetchAlerts
+    ['alerts', getCurrentUsername()],
+    () => fetchAlerts()
   );
   const [form, setForm] = useState<PriceAlertRequest>(initialForm);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -71,7 +71,13 @@ export function Alerts() {
 
     try {
       const triggered = await checkAlertsNow();
-      await mutate();
+      if (triggered.length > 0) {
+        await mutate(
+          (current) =>
+            current?.map((alert) => triggered.find((triggeredAlert) => triggeredAlert.id === alert.id) ?? alert),
+          { revalidate: false }
+        );
+      }
       setMessage(
         triggered.length === 1 ? '1 alert was triggered.' : `${triggered.length} alerts were triggered.`
       );
